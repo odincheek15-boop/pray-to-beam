@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🙏 Pray to Beam</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0608;
+  --bg2: #120d10;
+  --bg3: #1a1018;
+  --bg4: #221525;
+  --surface: #1e1420;
+  --surface2: #2a1c2e;
+  --border: rgba(180,120,220,0.15);
+  --border2: rgba(180,120,220,0.3);
+  --text: #f0e8f5;
+  --text2: #b89ec8;
+  --text3: #7a6088;
+  --gold: #e8c56a;
+  --gold2: #c4962a;
+  --beam: #c87aff;
+  --beam2: #8840cc;
+  --beam3: #5c2a8c;
+  --pink: #f06090;
+  --teal: #50d4b0;
+  --common: #8a8090;
+  --uncommon: #70c060;
+  --rare: #6080ff;
+  --epic: #d060f0;
+  --legendary: #ffb030;
+  --mythic: #ff4090;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── NOISE OVERLAY ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.5}
+
+/* ── AMBIENT GLOW ── */
+body::after{content:'';position:fixed;top:-40%;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(ellipse,rgba(140,60,200,0.08) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+/* ── TOP BAR ── */
+#topbar{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(20,12,24,0.95),rgba(14,8,18,0.85));backdrop-filter:blur(10px);flex-shrink:0}
+.game-logo{font-family:'Cinzel Decorative',serif;font-size:18px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--gold),var(--beam),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none}
+.top-stats{display:flex;gap:6px;flex-wrap:wrap}
+.top-stat{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:13px;color:var(--text2)}
+.top-stat .val{font-family:'Cinzel',serif;font-size:14px;font-weight:600;color:var(--text)}
+.top-stat.beams .val{color:var(--beam)}
+.top-stat.bps .val{color:var(--teal)}
+
+/* ── MAIN LAYOUT ── */
+#main{flex:1;display:grid;grid-template-columns:260px 1fr 280px;overflow:hidden;position:relative;z-index:1}
+
+/* ── PANELS ── */
+.panel{overflow-y:auto;border-right:1px solid var(--border);background:var(--bg2)}
+.panel::-webkit-scrollbar{width:4px}
+.panel::-webkit-scrollbar-track{background:transparent}
+.panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.panel-header{padding:14px 16px 10px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:5}
+
+/* ── LEFT PANEL ── */
+#left-panel{display:flex;flex-direction:column}
+#left-panel .panel-header{flex-shrink:0}
+
+/* ── UPGRADE ITEMS ── */
+.upgrade-item{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;transition:background 0.15s;cursor:default}
+.upgrade-item:hover{background:var(--surface)}
+.upgrade-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.upgrade-meta{flex:1;min-width:0}
+.upgrade-name{font-family:'Cinzel',serif;font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+.upgrade-desc{font-size:12px;color:var(--text3);font-style:italic;line-height:1.3}
+.upgrade-cost{font-family:'Cinzel',serif;font-size:11px;color:var(--beam);margin-top:3px}
+.upgrade-stacks{font-size:10px;color:var(--text3)}
+.buy-btn{flex-shrink:0;background:transparent;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:11px;color:var(--text);cursor:pointer;transition:all 0.15s;white-space:nowrap;margin-top:2px}
+.buy-btn:hover:not(:disabled){background:var(--surface2);border-color:var(--beam);color:var(--beam)}
+.buy-btn:disabled{opacity:0.3;cursor:not-allowed}
+.buy-btn.maxed{opacity:0.4;cursor:default;font-style:italic}
+
+/* ── CENTER PANEL ── */
+#center{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* ── SUMMON AREA ── */
+#summon-area{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:20px;background:linear-gradient(180deg,var(--bg3),var(--bg));border-bottom:1px solid var(--border)}
+
+.summon-title{font-family:'Cinzel Decorative',serif;font-size:11px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-bottom:16px}
+
+/* THE ORBS / REVEAL DISPLAY */
+#reveal-display{width:100%;max-width:480px;min-height:110px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:16px;position:relative}
+
+.reveal-orb{width:90px;height:100px;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;transition:transform 0.2s}
+.reveal-orb.big{width:130px;height:140px;border-radius:16px}
+.reveal-orb .r-glow{position:absolute;inset:0;opacity:0;transition:opacity 0.5s;border-radius:inherit}
+.reveal-orb .r-emoji{font-size:36px;position:relative;z-index:1}
+.reveal-orb.big .r-emoji{font-size:52px}
+.reveal-orb .r-name{font-size:10px;color:var(--text2);text-align:center;padding:0 4px;position:relative;z-index:1;font-family:'Cinzel',serif;line-height:1.2}
+.reveal-orb.big .r-name{font-size:12px}
+.reveal-orb .r-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-family:'Cinzel',serif;font-weight:600;letter-spacing:0.5px;position:relative;z-index:1}
+.reveal-orb.new-shine::after{content:'NEW';position:absolute;top:6px;right:6px;font-size:8px;font-family:'Cinzel',serif;font-weight:700;background:var(--pink);color:#fff;padding:2px 5px;border-radius:4px;z-index:2}
+.reveal-orb.anim{animation:orbpop 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes orbpop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+
+/* rarity glow colors */
+.reveal-orb[data-r="common"]{border-color:rgba(138,128,144,0.4)}
+.reveal-orb[data-r="common"] .r-glow{background:radial-gradient(circle at 50% 60%,rgba(138,128,144,0.2),transparent)}
+.reveal-orb[data-r="uncommon"]{border-color:rgba(112,192,96,0.5)}
+.reveal-orb[data-r="uncommon"] .r-glow{background:radial-gradient(circle at 50% 60%,rgba(112,192,96,0.25),transparent)}
+.reveal-orb[data-r="rare"]{border-color:rgba(96,128,255,0.6)}
+.reveal-orb[data-r="rare"] .r-glow{background:radial-gradient(circle at 50% 60%,rgba(96,128,255,0.3),transparent)}
+.reveal-orb[data-r="epic"]{border-color:rgba(208,96,240,0.7)}
+.reveal-orb[data-r="epic"] .r-glow{background:radial-gradient(circle at 50% 60%,rgba(208,96,240,0.35),transparent)}
+.reveal-orb[data-r="legendary"]{border-color:rgba(255,176,48,0.8)}
+.reveal-orb[data-r="legendary"] .r-glow{background:radial-gradient(circle at 50% 60%,rgba(255,176,48,0.4),transparent)}
+.reveal-orb[data-r="mythic"]{border-color:rgba(255,64,144,0.9);animation:mythicborder 2s infinite}
+.reveal-orb[data-r="mythic"] .r-glow{background:radial-gradient(circle at 50% 60%,rgba(200,80,255,0.45),transparent)}
+@keyframes mythicborder{0%,100%{border-color:rgba(255,64,144,0.9)}50%{border-color:rgba(200,100,255,0.9)}}
+.r-glow{opacity:1!important}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;width:100%;max-width:480px;margin-bottom:10px}
+.summon-btn{flex:1;padding:12px 16px;border-radius:10px;border:none;font-family:'Cinzel',serif;font-weight:600;font-size:13px;letter-spacing:1px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
+.summon-btn::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.08);opacity:0;transition:opacity 0.15s}
+.summon-btn:hover::before{opacity:1}
+.summon-btn:active{transform:scale(0.97)}
+.summon-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.btn-single{background:linear-gradient(135deg,var(--beam3),var(--beam2));color:var(--text);border:1px solid rgba(200,122,255,0.4)}
+.btn-ten{background:linear-gradient(135deg,#6030a0,#9050d0);color:var(--text);border:1px solid rgba(160,100,240,0.5)}
+.btn-hundred{background:linear-gradient(135deg,#402060,#7030b0);color:var(--text);border:1px solid rgba(120,60,200,0.4);font-size:12px}
+.btn-cost{font-size:10px;font-family:'Crimson Pro',serif;font-style:italic;color:rgba(255,255,255,0.6);margin-top:2px;display:block;font-weight:300}
+
+/* BEAM METER */
+.beam-meter-wrap{width:100%;max-width:480px}
+.beam-meter-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px}
+.beam-meter{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.beam-fill{height:100%;background:linear-gradient(90deg,var(--beam3),var(--beam),var(--pink));transition:width 0.4s;border-radius:4px;position:relative}
+.beam-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3));animation:beamshine 1.5s infinite}
+@keyframes beamshine{0%{transform:translateX(40px)}100%{transform:translateX(-100px)}}
+
+/* AUTO + TAP ROW */
+.controls-row{display:flex;gap:10px;width:100%;max-width:480px;margin-top:10px;align-items:center}
+.tap-btn{width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border2);font-size:26px;cursor:pointer;transition:all 0.1s;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.tap-btn:active{transform:scale(0.85);background:var(--surface2)}
+.tap-power{font-size:11px;color:var(--text3);font-style:italic}
+.tap-power strong{color:var(--beam);font-style:normal}
+.auto-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+.auto-label{font-size:12px;color:var(--text2)}
+.toggle-sw{width:40px;height:22px;background:var(--surface2);border-radius:11px;cursor:pointer;position:relative;border:1px solid var(--border2);transition:background 0.2s;flex-shrink:0}
+.toggle-sw.on{background:var(--beam2)}
+.toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.4)}
+.toggle-sw.on::after{left:20px}
+
+/* ── COLLECTION AREA ── */
+#collection-area{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.coll-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)}
+.coll-tab{padding:10px 18px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.5px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;text-transform:uppercase;border-right:1px solid var(--border)}
+.coll-tab:hover{color:var(--text2)}
+.coll-tab.active{color:var(--beam);border-bottom-color:var(--beam)}
+.coll-filters{display:flex;gap:5px;padding:8px 14px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--bg2)}
+.filt-btn{padding:3px 10px;border-radius:12px;font-size:11px;font-family:'Cinzel',serif;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all 0.15s;letter-spacing:0.5px}
+.filt-btn:hover{border-color:var(--border2);color:var(--text2)}
+.filt-btn.active{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.filt-btn[data-r="common"].active{border-color:var(--common);color:var(--common)}
+.filt-btn[data-r="uncommon"].active{border-color:var(--uncommon);color:var(--uncommon)}
+.filt-btn[data-r="rare"].active{border-color:var(--rare);color:var(--rare)}
+.filt-btn[data-r="epic"].active{border-color:var(--epic);color:var(--epic)}
+.filt-btn[data-r="legendary"].active{border-color:var(--legendary);color:var(--legendary)}
+.filt-btn[data-r="mythic"].active{border-color:var(--mythic);color:var(--mythic)}
+.coll-grid-wrap{flex:1;overflow-y:auto;padding:12px 14px}
+.coll-grid-wrap::-webkit-scrollbar{width:4px}
+.coll-grid-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.coll-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.dog-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 5px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
+.dog-tile::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.15s;border-radius:inherit}
+.dog-tile:hover{transform:translateY(-2px);border-color:var(--border2)}
+.dog-tile:hover::before{opacity:1}
+.dog-tile[data-r="common"]::before{background:radial-gradient(ellipse at 50% 100%,rgba(138,128,144,0.15),transparent)}
+.dog-tile[data-r="uncommon"]::before{background:radial-gradient(ellipse at 50% 100%,rgba(112,192,96,0.15),transparent)}
+.dog-tile[data-r="rare"]::before{background:radial-gradient(ellipse at 50% 100%,rgba(96,128,255,0.15),transparent)}
+.dog-tile[data-r="epic"]::before{background:radial-gradient(ellipse at 50% 100%,rgba(208,96,240,0.2),transparent)}
+.dog-tile[data-r="legendary"]::before{background:radial-gradient(ellipse at 50% 100%,rgba(255,176,48,0.2),transparent)}
+.dog-tile[data-r="mythic"]::before{background:radial-gradient(ellipse at 50% 100%,rgba(255,64,144,0.25),transparent)}
+.dog-tile.locked{opacity:0.25;filter:grayscale(1);cursor:default}
+.dog-tile.locked:hover{transform:none;border-color:var(--border)}
+.dog-emoji{font-size:30px;line-height:1.2;position:relative;z-index:1}
+.dog-name{font-size:9px;text-align:center;color:var(--text2);font-family:'Cinzel',serif;line-height:1.2;position:relative;z-index:1;word-break:break-word}
+.dog-count-badge{position:absolute;top:3px;right:4px;font-size:9px;font-family:'Cinzel',serif;font-weight:600;color:var(--text3)}
+.rarity-stripe{position:absolute;bottom:0;left:0;right:0;height:2px}
+.dog-tile[data-r="common"] .rarity-stripe{background:var(--common)}
+.dog-tile[data-r="uncommon"] .rarity-stripe{background:var(--uncommon)}
+.dog-tile[data-r="rare"] .rarity-stripe{background:var(--rare)}
+.dog-tile[data-r="epic"] .rarity-stripe{background:var(--epic)}
+.dog-tile[data-r="legendary"] .rarity-stripe{background:linear-gradient(90deg,var(--legendary),#fff8,var(--legendary));animation:goldshine 2s infinite}
+.dog-tile[data-r="mythic"] .rarity-stripe{background:linear-gradient(90deg,var(--mythic),var(--beam),var(--mythic));animation:goldshine 1.5s infinite}
+@keyframes goldshine{0%{background-position:0%}100%{background-position:200%}}
+.empty-msg{grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text3);font-style:italic;font-size:14px}
+
+/* ── RIGHT PANEL ── */
+#right-panel{border-right:none;border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
+#right-panel .panel-header{flex-shrink:0}
+
+/* INFO CARD */
+#info-card{padding:14px;border-bottom:1px solid var(--border);min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.info-placeholder{text-align:center;color:var(--text3);font-style:italic;font-size:13px;line-height:1.5}
+.info-emoji{font-size:56px;margin-bottom:8px;filter:drop-shadow(0 0 12px currentColor)}
+.info-dog-name{font-family:'Cinzel',serif;font-size:14px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px}
+.info-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.info-rarity-badge{font-size:10px;font-family:'Cinzel',serif;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:0.5px}
+.badge-common{background:rgba(138,128,144,0.2);color:var(--common);border:1px solid rgba(138,128,144,0.4)}
+.badge-uncommon{background:rgba(112,192,96,0.15);color:var(--uncommon);border:1px solid rgba(112,192,96,0.4)}
+.badge-rare{background:rgba(96,128,255,0.15);color:var(--rare);border:1px solid rgba(96,128,255,0.4)}
+.badge-epic{background:rgba(208,96,240,0.15);color:var(--epic);border:1px solid rgba(208,96,240,0.4)}
+.badge-legendary{background:rgba(255,176,48,0.15);color:var(--legendary);border:1px solid rgba(255,176,48,0.5)}
+.badge-mythic{background:rgba(255,64,144,0.15);color:var(--mythic);border:1px solid rgba(255,64,144,0.5);animation:mythicbadge 2s infinite}
+@keyframes mythicbadge{0%,100%{border-color:rgba(255,64,144,0.5)}50%{border-color:rgba(200,100,255,0.8)}}
+.info-theme-badge{font-size:10px;padding:3px 8px;border-radius:10px;background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.info-desc{font-size:12px;color:var(--text2);text-align:center;font-style:italic;line-height:1.5;padding:0 8px;margin-bottom:8px}
+.info-stats-row{display:flex;gap:10px;justify-content:center;font-size:11px;color:var(--text3)}
+.info-stat{display:flex;flex-direction:column;align-items:center;gap:1px}
+.info-stat strong{font-family:'Cinzel',serif;color:var(--text);font-size:13px}
+
+/* LOG */
+#log-section{flex:1;overflow:hidden;display:flex;flex-direction:column}
+#log-section .panel-header{flex-shrink:0}
+#log-list{flex:1;overflow-y:auto;padding:4px 0}
+#log-list::-webkit-scrollbar{width:4px}
+#log-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.log-entry{padding:6px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;transition:background 0.1s}
+.log-entry:hover{background:var(--surface)}
+.log-em{font-size:18px;flex-shrink:0}
+.log-info{flex:1;min-width:0}
+.log-name{color:var(--text);font-family:'Cinzel',serif;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-sub{font-size:10px;color:var(--text3);font-style:italic}
+.log-new{font-size:9px;font-family:'Cinzel',serif;font-weight:700;padding:2px 5px;border-radius:4px;background:rgba(255,64,144,0.2);color:var(--mythic);flex-shrink:0}
+
+/* ODDS SECTION */
+#odds-section{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.odds-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.odds-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px}
+.odds-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.odds-label{flex:1;color:var(--text2)}
+.odds-bar-wrap{width:80px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.odds-bar{height:100%;border-radius:3px}
+.odds-pct{font-family:'Cinzel',serif;font-size:10px;color:var(--text3);min-width:38px;text-align:right}
+
+/* PROGRESS BAR SECTION */
+#progress-section{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.prog-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.prog-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text2)}
+.prog-bar-wrap{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--beam2),var(--beam));border-radius:3px;transition:width 0.5s}
+.prog-count{min-width:40px;text-align:right;font-family:'Cinzel',serif;font-size:10px;color:var(--text3)}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 20px;font-family:'Cinzel',serif;font-size:13px;color:var(--text);z-index:9999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;opacity:0;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* FLOATING BEAM NUMBERS */
+.float-num{position:fixed;pointer-events:none;font-family:'Cinzel',serif;font-size:14px;font-weight:600;color:var(--beam);animation:floatup 1s ease-out forwards;z-index:9998}
+@keyframes floatup{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+
+/* EMPTY STATE */
+.compendium-empty{color:var(--text3);font-style:italic;font-size:12px;font-family:'Cinzel',serif;letter-spacing:1px;text-align:center}
+
+/* SCROLLBAR */
+.panel::-webkit-scrollbar{width:4px}
+.panel::-webkit-scrollbar-track{background:transparent}
+.panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="game-logo">🙏 Pray to Beam</div>
+  <div class="top-stats">
+    <div class="top-stat beams">✨ <span class="val" id="s-beams">10</span> beams</div>
+    <div class="top-stat bps">⚡ <span class="val" id="s-bps">0</span>/s</div>
+    <div class="top-stat">🐾 <span class="val" id="s-unique">0</span> / <span class="val" id="s-total">48</span> unique</div>
+    <div class="top-stat">📦 <span class="val" id="s-total-coll">0</span> collected</div>
+    <div class="top-stat">🎯 <span class="val" id="s-summons">0</span> summons</div>
+  </div>
+</div>
+
+<div id="main">
+  <!-- LEFT: UPGRADES -->
+  <div class="panel" id="left-panel">
+    <div class="panel-header">⚗ Upgrades</div>
+    <div id="upgrade-list"></div>
+  </div>
+
+  <!-- CENTER: SUMMON + COLLECTION -->
+  <div id="center">
+    <div id="summon-area">
+      <div class="summon-title">✦ The Beam Chamber ✦</div>
+      <div id="reveal-display">
+        <div id="placeholder-orb" class="reveal-orb big" data-r="common" style="opacity:0.4">
+          <div class="r-glow"></div>
+          <div class="r-emoji">🙏</div>
+          <div class="r-name">await the beam</div>
+          <div class="r-badge badge-common">pray</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="summon-btn btn-single" id="btn1" onclick="doSummon(1)">
+          ✦ Summon One<br><span class="btn-cost" id="c1-cost">costs 10 beams</span>
+        </button>
+        <button class="summon-btn btn-ten" id="btn10" onclick="doSummon(10)">
+          ⚡ Summon ×10<br><span class="btn-cost" id="c10-cost">costs 100 beams</span>
+        </button>
+        <button class="summon-btn btn-hundred" id="btn100" onclick="doSummon(100)">
+          💫 Summon ×100<br><span class="btn-cost" id="c100-cost">costs 1000 beams</span>
+        </button>
+      </div>
+      <div class="beam-meter-wrap">
+        <div class="beam-meter-labels">
+          <span>beam energy</span><span id="beam-pct-label">0%</span>
+        </div>
+        <div class="beam-meter"><div class="beam-fill" id="beam-fill" style="width:1%"></div></div>
+      </div>
+      <div class="controls-row">
+        <button class="tap-btn" id="tap-btn" onclick="tapBeam(event)">🙏</button>
+        <div>
+          <div class="tap-power">tap power: <strong id="tap-power-val">+1</strong> beam</div>
+          <div class="tap-power" style="margin-top:2px">total taps: <strong id="total-taps">0</strong></div>
+        </div>
+        <div class="auto-wrap">
+          <span class="auto-label">auto-beam</span>
+          <div class="toggle-sw" id="auto-toggle" onclick="toggleAuto()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLECTION -->
+    <div id="collection-area">
+      <div class="coll-tabs">
+        <div class="coll-tab active" onclick="setTab('owned',this)">My Bulldogs</div>
+        <div class="coll-tab" onclick="setTab('compendium',this)">Compendium</div>
+      </div>
+      <div class="coll-filters" id="coll-filters">
+        <button class="filt-btn active" data-r="all" onclick="setFilter('all',this)">All</button>
+        <button class="filt-btn" data-r="common" onclick="setFilter('common',this)">Common</button>
+        <button class="filt-btn" data-r="uncommon" onclick="setFilter('uncommon',this)">Uncommon</button>
+        <button class="filt-btn" data-r="rare" onclick="setFilter('rare',this)">Rare</button>
+        <button class="filt-btn" data-r="epic" onclick="setFilter('epic',this)">Epic</button>
+        <button class="filt-btn" data-r="legendary" onclick="setFilter('legendary',this)">Legendary</button>
+        <button class="filt-btn" data-r="mythic" onclick="setFilter('mythic',this)">Mythic</button>
+      </div>
+      <div class="coll-grid-wrap">
+        <div class="coll-grid" id="coll-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: INFO + LOG -->
+  <div class="panel" id="right-panel">
+    <div class="panel-header">📖 Inspector</div>
+    <div id="info-card">
+      <div class="info-placeholder">
+        <div style="font-size:36px;margin-bottom:8px;opacity:0.4">🔍</div>
+        Click any bulldog to inspect it
+      </div>
+    </div>
+
+    <div id="log-section">
+      <div class="panel-header">📜 Recent Finds</div>
+      <div id="log-list"><div class="log-entry"><span class="log-sub" style="padding:8px">No bulldogs summoned yet...</span></div></div>
+    </div>
+
+    <div id="progress-section">
+      <div class="prog-title">Collection Progress</div>
+      <div id="prog-rows"></div>
+    </div>
+
+    <div id="odds-section">
+      <div class="odds-title">Rarity Odds</div>
+      <div id="odds-rows"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const DOGS = [
+  {id:0,name:"Classic Wrinkle",emoji:"🐶",theme:"Classic",element:"Earth",rarity:"common",weight:300,desc:"The OG bulldog. Wrinkles for days. Has been wrinkled since birth and plans to stay that way."},
+  {id:1,name:"Muddy Paws",emoji:"🐾",theme:"Mud",element:"Earth",rarity:"common",weight:280,desc:"Never met a puddle it didn't love. Leaves a trail of chaos wherever it treads."},
+  {id:2,name:"Snore King",emoji:"😪",theme:"Sleep",element:"Air",rarity:"common",weight:260,desc:"Record-setting snores. 94 decibels measured in controlled conditions. The neighbors have moved twice."},
+  {id:3,name:"Drool Duke",emoji:"💧",theme:"Water",element:"Water",rarity:"common",weight:250,desc:"Leaves a trail wherever it goes. Hydrogeologists have mapped its routes."},
+  {id:4,name:"Grumpy Pug",emoji:"😤",theme:"Mood",element:"Air",rarity:"common",weight:240,desc:"Always judging. Always grumpy. Has never smiled in recorded history."},
+  {id:5,name:"Sunday Couch",emoji:"🛋️",theme:"Lazy",element:"Earth",rarity:"common",weight:230,desc:"Has not moved since Tuesday. Scientists believe it may have fused with the cushions."},
+  {id:6,name:"Zoomie Boi",emoji:"⚡",theme:"Speed",element:"Lightning",rarity:"common",weight:220,desc:"3am zoomies. No explanation. No apologies."},
+  {id:7,name:"Treat Goblin",emoji:"🦴",theme:"Food",element:"Earth",rarity:"common",weight:210,desc:"Will do anything for treats. Has solved puzzles, opened doors, and filed taxes."},
+  {id:8,name:"Belly Up",emoji:"🐽",theme:"Chill",element:"Air",rarity:"common",weight:200,desc:"Permanently belly-side up. Gravity appears to affect it differently."},
+  {id:9,name:"The Waiter",emoji:"🍽️",theme:"Food",element:"Earth",rarity:"common",weight:190,desc:"Sits by the table every night. Has never received anything. Still shows up."},
+  {id:10,name:"Bath Hater",emoji:"🚿",theme:"Water",element:"Water",rarity:"common",weight:185,desc:"Fears only one thing. You know what it is."},
+  {id:11,name:"Window Watcher",emoji:"🪟",theme:"Vigil",element:"Air",rarity:"common",weight:180,desc:"Watches the street all day. Suspects everyone. Reports nothing."},
+  {id:12,name:"Wrinkle Wizard",emoji:"🧙",theme:"Magic",element:"Arcane",rarity:"uncommon",weight:120,desc:"Ancient wisdom in every fold. Studies wrinkle-based sorcery at night."},
+  {id:13,name:"Puddle Splash",emoji:"🌊",theme:"Water",element:"Water",rarity:"uncommon",weight:115,desc:"Loves to splash. Hates baths. The contradiction defines it."},
+  {id:14,name:"Static Bark",emoji:"⚡",theme:"Electric",element:"Lightning",rarity:"uncommon",weight:110,desc:"Static electricity follows it everywhere. Small pets avoid it."},
+  {id:15,name:"Frostbite Floof",emoji:"❄️",theme:"Ice",element:"Ice",rarity:"uncommon",weight:108,desc:"Prefers cold floors. All floors. Will drag itself across tile in January."},
+  {id:16,name:"Ember Snout",emoji:"🔥",theme:"Fire",element:"Fire",rarity:"uncommon",weight:105,desc:"Always warm to the touch. Perfect on winter mornings."},
+  {id:17,name:"Mossy Back",emoji:"🌿",theme:"Nature",element:"Earth",rarity:"uncommon",weight:100,desc:"Has a small garden growing on it. Waters itself occasionally."},
+  {id:18,name:"Cloud Napper",emoji:"☁️",theme:"Sky",element:"Air",rarity:"uncommon",weight:95,desc:"Dreams of infinite naps. Has been asleep for 22 of the last 24 hours."},
+  {id:19,name:"Sand Baron",emoji:"🏜️",theme:"Desert",element:"Earth",rarity:"uncommon",weight:90,desc:"Rules the sandbox with iron paw. Claims all dry land within sight."},
+  {id:20,name:"Brine Bully",emoji:"🧂",theme:"Ocean",element:"Water",rarity:"uncommon",weight:88,desc:"Smells faintly of the sea. No one knows why. No one asks."},
+  {id:21,name:"Mushroom Cap",emoji:"🍄",theme:"Forest",element:"Earth",rarity:"uncommon",weight:85,desc:"Found in damp places. Very mysterious. Has not blinked once."},
+  {id:22,name:"Lantern Jowls",emoji:"🏮",theme:"Festival",element:"Fire",rarity:"uncommon",weight:82,desc:"Glows faintly at dusk. Has been glowing since August."},
+  {id:23,name:"Storm Ruff",emoji:"⛈️",theme:"Storm",element:"Lightning",rarity:"uncommon",weight:78,desc:"Its mood forecasts the weather. Meteorologists consult it."},
+  {id:24,name:"Thunderpaws",emoji:"🌩️",theme:"Storm",element:"Lightning",rarity:"rare",weight:50,desc:"Arrives with thunder. Leaves with chaos. Has knocked over 47 lamps."},
+  {id:25,name:"Blizzard Bulge",emoji:"🌨️",theme:"Ice",element:"Ice",rarity:"rare",weight:48,desc:"Leaves paw prints that never melt. Researchers study them."},
+  {id:26,name:"Magma Lump",emoji:"🌋",theme:"Volcano",element:"Fire",rarity:"rare",weight:46,desc:"Core temperature: very yes. Sits on the cold tile as a public service."},
+  {id:27,name:"Tide Warden",emoji:"🌊",theme:"Ocean",element:"Water",rarity:"rare",weight:44,desc:"Controls the tides. Mostly accidentally. Coastal towns have adapted."},
+  {id:28,name:"Gale Snout",emoji:"🌬️",theme:"Wind",element:"Air",rarity:"rare",weight:42,desc:"Sneeze = category 3 event. Has been officially named by meteorological agencies."},
+  {id:29,name:"Crystal Chomp",emoji:"💎",theme:"Crystal",element:"Arcane",rarity:"rare",weight:40,desc:"Body is 40% gemstone. Still soft. Still warm. Geologists are baffled."},
+  {id:30,name:"Fungal Knight",emoji:"🍄",theme:"Spore",element:"Earth",rarity:"rare",weight:38,desc:"Commands the mycelium network. The forests answer to it."},
+  {id:31,name:"Nebula Napper",emoji:"🌌",theme:"Space",element:"Cosmic",rarity:"rare",weight:36,desc:"Eyes contain entire galaxies. Looking too long causes mild existential dread."},
+  {id:32,name:"Rune Wrinkle",emoji:"🔮",theme:"Magic",element:"Arcane",rarity:"rare",weight:35,desc:"Runes appear spontaneously on its folds at midnight. Scholars transcribe them."},
+  {id:33,name:"Iron Jowl",emoji:"⚙️",theme:"Steampunk",element:"Metal",rarity:"rare",weight:33,desc:"Part dog. Part mechanism. All attitude. Needs oiling every third Tuesday."},
+  {id:34,name:"Bog Drake",emoji:"🐊",theme:"Swamp",element:"Water",rarity:"rare",weight:30,desc:"Emerged from the bog smelling of ancient things. Has not left since."},
+  {id:35,name:"Prism Pelt",emoji:"🌈",theme:"Rainbow",element:"Light",rarity:"epic",weight:15,desc:"Refracts light into perfect bulldog spectra. Scientists can't explain the new colors."},
+  {id:36,name:"Void Snore",emoji:"🕳️",theme:"Void",element:"Cosmic",rarity:"epic",weight:14,desc:"Its snores consume light. Literally. The room dims with each exhalation."},
+  {id:37,name:"Temporal Drool",emoji:"⏳",theme:"Time",element:"Arcane",rarity:"epic",weight:13,desc:"Drools in all timelines simultaneously. Physicists have published 14 papers about this."},
+  {id:38,name:"Neon Bark",emoji:"🌃",theme:"Cyberpunk",element:"Lightning",rarity:"epic",weight:12,desc:"Its bark glitches reality slightly. Two tiles of floor phase out on each woof."},
+  {id:39,name:"Rift Paw",emoji:"🌀",theme:"Dimension",element:"Cosmic",rarity:"epic",weight:11,desc:"Opens portals when it sits down too fast. Three rooms connect to the kitchen now."},
+  {id:40,name:"Inferno Duke",emoji:"🔥",theme:"Hellfire",element:"Fire",rarity:"epic",weight:10,desc:"Breathes gentle fire. Very polite about it. Says excuse me every time."},
+  {id:41,name:"Abyssal Chonk",emoji:"🦑",theme:"Deep Sea",element:"Water",rarity:"epic",weight:9,desc:"Dragged up from 11km down. Seems fine. Blinks in bioluminescence."},
+  {id:42,name:"Aurora Jowls",emoji:"🌅",theme:"Aurora",element:"Light",rarity:"epic",weight:8,desc:"Its cheeks produce northern lights. Tour companies have relocated to follow it."},
+  {id:43,name:"Obsidian Snarl",emoji:"🖤",theme:"Shadow",element:"Void",rarity:"epic",weight:7,desc:"Made of compressed darkness. Somehow warm and cuddly. Science has no answers."},
+  {id:44,name:"Quasar Flop",emoji:"✨",theme:"Quasar",element:"Cosmic",rarity:"legendary",weight:3,desc:"Radiates energy equivalent to a billion suns. Still needs walks. Still wants the good kibble."},
+  {id:45,name:"Singularity Sniff",emoji:"🕳️",theme:"Black Hole",element:"Cosmic",rarity:"legendary",weight:2.5,desc:"Sniffs so hard it bends spacetime. Has smelled things from 40,000 years ago."},
+  {id:46,name:"Prismatic Sovereign",emoji:"💠",theme:"Crystal God",element:"Arcane",rarity:"legendary",weight:2,desc:"Older than the universe. Loves belly rubs. Has been waiting for someone worthy to give them."},
+  {id:47,name:"Eternal Wrinkle",emoji:"♾️",theme:"Infinity",element:"Arcane",rarity:"legendary",weight:1.8,desc:"Has existed since before math was invented. Its first wrinkle predates causality."},
+  {id:48,name:"Solar Drool",emoji:"☀️",theme:"Solar",element:"Fire",rarity:"legendary",weight:1.5,desc:"Its drool powers entire star systems. Several inhabited planets owe their existence to it."},
+  {id:49,name:"The First Dog",emoji:"🐕",theme:"Origin",element:"Earth",rarity:"legendary",weight:1,desc:"Before bulldogs there was this. The source. Every bulldog carries a fragment of its soul."},
+  {id:50,name:"Throne Hound",emoji:"👑",theme:"Royalty",element:"Arcane",rarity:"legendary",weight:0.8,desc:"Sat upon every throne in history. All kingdoms have ended. It remains."},
+  {id:51,name:"BEAM INCARNATE",emoji:"🙏",theme:"The Beam",element:"Beam",rarity:"mythic",weight:0.3,desc:"It IS the beam. The beam IS it. You have witnessed something that should not be possible."},
+  {id:52,name:"Null Jowls",emoji:"🌑",theme:"Null",element:"Void",rarity:"mythic",weight:0.25,desc:"Cannot be described. You are looking at nothing. The nothing looks back and seems pleased."},
+  {id:53,name:"The Unchosen",emoji:"👁️",theme:"Fate",element:"Arcane",rarity:"mythic",weight:0.2,desc:"Was never supposed to exist. The universe wrote an error log when it appeared. It chewed the log."},
+  {id:54,name:"Omega Chomp",emoji:"🔱",theme:"Omega",element:"Cosmic",rarity:"mythic",weight:0.15,desc:"Final form. Terminal velocity of bulldog. Has ascended beyond the concept of rarity tiers."},
+  {id:55,name:"The Beam Dog",emoji:"⭐",theme:"Ascended",element:"Beam",rarity:"mythic",weight:0.1,desc:"Transcended all elements. Transcended all things. Transcended the concept of transcendence. Still drools."},
+];
+
+const RARITIES = {
+  common:{color:"var(--common)",badge:"badge-common"},
+  uncommon:{color:"var(--uncommon)",badge:"badge-uncommon"},
+  rare:{color:"var(--rare)",badge:"badge-rare"},
+  epic:{color:"var(--epic)",badge:"badge-epic"},
+  legendary:{color:"var(--legendary)",badge:"badge-legendary"},
+  mythic:{color:"var(--mythic)",badge:"badge-mythic"},
+};
+
+const UPGRADES = [
+  {id:0,icon:"✋",name:"Blessed Paws",desc:"Tap gives +2 beams",cost:30,max:5,bought:0,type:"tap",val:2},
+  {id:1,icon:"🙌",name:"Sacred Touch",desc:"Tap gives +5 beams",cost:120,max:5,bought:0,type:"tap",val:5},
+  {id:2,icon:"💫",name:"Beam Amplifier",desc:"Tap gives +15 beams",cost:600,max:5,bought:0,type:"tap",val:15},
+  {id:3,icon:"👼",name:"Beam Angel",desc:"Tap gives +50 beams",cost:5000,max:3,bought:0,type:"tap",val:50},
+  {id:4,icon:"😴",name:"Auto Snore",desc:"+1 beam/sec passive",cost:100,max:10,bought:0,type:"bps",val:1},
+  {id:5,icon:"💧",name:"Drool Engine",desc:"+3 beam/sec passive",cost:350,max:10,bought:0,type:"bps",val:3},
+  {id:6,icon:"🏠",name:"Sacred Kennel",desc:"+10 beam/sec passive",cost:1500,max:5,bought:0,type:"bps",val:10},
+  {id:7,icon:"🌊",name:"Tide Engine",desc:"+25 beam/sec passive",cost:6000,max:5,bought:0,type:"bps",val:25},
+  {id:8,icon:"⚡",name:"Beam Reactor",desc:"+75 beam/sec passive",cost:20000,max:3,bought:0,type:"bps",val:75},
+  {id:9,icon:"🌌",name:"Cosmic Siphon",desc:"+200 beam/sec passive",cost:80000,max:3,bought:0,type:"bps",val:200},
+  {id:10,icon:"🎪",name:"Wrinkle Portal",desc:"-20% summon cost",cost:250,max:3,bought:0,type:"cost",val:0.2},
+  {id:11,icon:"🍀",name:"Lucky Collar",desc:"+10% rare+ weight",cost:700,max:5,bought:0,type:"lucky",val:0.1},
+  {id:12,icon:"💎",name:"Gem Collar",desc:"+25% rare+ weight",cost:3000,max:3,bought:0,type:"lucky",val:0.25},
+  {id:13,icon:"🌈",name:"Prism Collar",desc:"+50% legendary+ weight",cost:15000,max:2,bought:0,type:"legend",val:0.5},
+  {id:14,icon:"🙏",name:"Beam Blessing",desc:"Auto-beam costs 0",cost:5000,max:1,bought:0,type:"freecost",val:0},
+  {id:15,icon:"♾️",name:"Eternal Grind",desc:"+500 beam/sec passive",cost:300000,max:1,bought:0,type:"bps",val:500},
+];
+
+let G = {
+  beams: 10,
+  tapPower: 1,
+  bps: 0,
+  costMult: 1.0,
+  luckyMult: 1.0,
+  legendMult: 1.0,
+  autoBeam: false,
+  autoFree: false,
+  collection: {},
+  taps: 0,
+  summons: 0,
+  filter: "all",
+  tab: "owned",
+  selectedDog: null,
+};
+
+let autoInterval = null;
+
+function totalWeight() {
+  let total = 0;
+  DOGS.forEach(d => {
+    let w = d.weight;
+    if(["rare","epic","legendary","mythic"].includes(d.rarity)) w *= G.luckyMult;
+    if(["legendary","mythic"].includes(d.rarity)) w *= G.legendMult;
+    total += w;
+  });
+  return total;
+}
+
+function pickDog() {
+  let tw = totalWeight(), r = Math.random() * tw, acc = 0;
+  for(let d of DOGS) {
+    let w = d.weight;
+    if(["rare","epic","legendary","mythic"].includes(d.rarity)) w *= G.luckyMult;
+    if(["legendary","mythic"].includes(d.rarity)) w *= G.legendMult;
+    acc += w;
+    if(r <= acc) return d;
+  }
+  return DOGS[0];
+}
+
+function summonCost(n) {
+  return Math.round(10 * n * G.costMult);
+}
+
+function doSummon(n) {
+  let cost = summonCost(n);
+  if(G.beams < cost) { showToast("Not enough beams!"); return; }
+  G.beams -= cost;
+  G.summons += n;
+  let results = [];
+  for(let i = 0; i < n; i++) results.push(pickDog());
+  results.forEach(d => {
+    if(!G.collection[d.id]) G.collection[d.id] = 0;
+    G.collection[d.id]++;
+  });
+  if(n === 1) {
+    showReveal([results[0]]);
+  } else {
+    showReveal(results.slice(0, Math.min(n, 20)));
+  }
+  results.forEach(d => addLog(d));
+  let newOnes = results.filter(d => G.collection[d.id] === 1);
+  if(newOnes.length > 0 && n > 1) showToast(`${newOnes.length} new bulldog${newOnes.length>1?"s":""}! ✨`);
+  if(results.some(d => d.rarity === "mythic")) showToast("🔱 A MYTHIC HAS BEEN REVEALED 🔱");
+  else if(results.some(d => d.rarity === "legendary")) showToast("👑 Legendary summoned!");
+  updateAll();
+}
+
+function showReveal(dogs) {
+  let container = document.getElementById("reveal-display");
+  container.innerHTML = "";
+  let isSingle = dogs.length === 1;
+  dogs.forEach((d, i) => {
+    let orb = document.createElement("div");
+    orb.className = "reveal-orb" + (isSingle ? " big" : "") + " anim";
+    orb.setAttribute("data-r", d.rarity);
+    let isNew = G.collection[d.id] === 1;
+    if(isNew) orb.classList.add("new-shine");
+    orb.style.animationDelay = (i * 30) + "ms";
+    orb.innerHTML = `<div class="r-glow"></div><div class="r-emoji">${d.emoji}</div><div class="r-name">${isSingle ? d.name : ""}</div><div class="r-badge ${RARITIES[d.rarity].badge}">${d.rarity}</div>`;
+    orb.onclick = () => showInfo(d);
+    container.appendChild(orb);
+  });
+  if(isSingle) showInfo(dogs[0]);
+}
+
+function showInfo(d) {
+  G.selectedDog = d;
+  let card = document.getElementById("info-card");
+  let owned = G.collection[d.id] || 0;
+  card.innerHTML = `
+    <div class="info-emoji">${d.emoji}</div>
+    <div class="info-dog-name">${d.name}</div>
+    <div class="info-meta">
+      <span class="info-rarity-badge ${RARITIES[d.rarity].badge}">${d.rarity}</span>
+      <span class="info-theme-badge">${d.theme}</span>
+      <span class="info-theme-badge">${d.element}</span>
+    </div>
+    <div class="info-desc">"${d.desc}"</div>
+    <div class="info-stats-row">
+      <div class="info-stat"><strong>${owned}</strong><span>owned</span></div>
+      <div class="info-stat"><strong>#${d.id+1}</strong><span>index</span></div>
+      <div class="info-stat"><strong>${(d.weight / DOGS.reduce((a,b)=>a+b.weight,0) * 100).toFixed(2)}%</strong><span>base rate</span></div>
+    </div>`;
+}
+
+function tapBeam(e) {
+  G.beams += G.tapPower;
+  G.taps++;
+  if(e) {
+    let num = document.createElement("div");
+    num.className = "float-num";
+    num.textContent = "+" + G.tapPower;
+    num.style.left = (e.clientX - 15) + "px";
+    num.style.top = (e.clientY - 20) + "px";
+    document.body.appendChild(num);
+    setTimeout(() => num.remove(), 1000);
+  }
+  updateAll();
+}
+
+function toggleAuto() {
+  G.autoBeam = !G.autoBeam;
+  let tog = document.getElementById("auto-toggle");
+  tog.className = "toggle-sw" + (G.autoBeam ? " on" : "");
+}
+
+function addLog(d) {
+  let list = document.getElementById("log-list");
+  let isNew = G.collection[d.id] === 1;
+  let el = document.createElement("div");
+  el.className = "log-entry";
+  el.innerHTML = `<span class="log-em">${d.emoji}</span><div class="log-info"><div class="log-name" style="color:${RARITIES[d.rarity].color}">${d.name}</div><div class="log-sub">${d.rarity} · ${d.theme}</div></div>${isNew ? '<span class="log-new">NEW!</span>' : ''}`;
+  el.onclick = () => showInfo(d);
+  list.insertBefore(el, list.firstChild);
+  while(list.children.length > 30) list.removeChild(list.lastChild);
+}
+
+function setFilter(f, btn) {
+  G.filter = f;
+  document.querySelectorAll(".filt-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderCollection();
+}
+
+function setTab(t, btn) {
+  G.tab = t;
+  document.querySelectorAll(".coll-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderCollection();
+}
+
+function renderCollection() {
+  let grid = document.getElementById("coll-grid");
+  grid.innerHTML = "";
+  let dogs;
+  if(G.tab === "owned") {
+    dogs = DOGS.filter(d => G.collection[d.id] && (G.filter === "all" || d.rarity === G.filter));
+    if(dogs.length === 0) {
+      grid.innerHTML = `<div class="empty-msg">No ${G.filter === "all" ? "" : G.filter + " "}bulldogs found yet.<br>Keep summoning!</div>`;
+      return;
+    }
+  } else {
+    dogs = DOGS.filter(d => G.filter === "all" || d.rarity === G.filter);
+  }
+  dogs.forEach(d => {
+    let owned = G.collection[d.id];
+    let locked = G.tab === "compendium" && !owned;
+    let tile = document.createElement("div");
+    tile.className = "dog-tile" + (locked ? " locked" : "");
+    tile.setAttribute("data-r", d.rarity);
+    tile.innerHTML = `${owned ? `<span class="dog-count-badge">×${owned}</span>` : ""}<div class="dog-emoji">${locked ? "❓" : d.emoji}</div><div class="dog-name">${locked ? "???" : d.name}</div><div class="rarity-stripe"></div>`;
+    if(!locked) tile.onclick = () => showInfo(d);
+    grid.appendChild(tile);
+  });
+}
+
+function renderUpgrades() {
+  let list = document.getElementById("upgrade-list");
+  list.innerHTML = "";
+  UPGRADES.forEach(u => {
+    let cost = Math.round(u.cost * Math.pow(1.9, u.bought));
+    let maxed = u.bought >= u.max;
+    let el = document.createElement("div");
+    el.className = "upgrade-item";
+    el.innerHTML = `<div class="upgrade-icon">${u.icon}</div>
+      <div class="upgrade-meta">
+        <div class="upgrade-name">${u.name} <span class="upgrade-stacks">(${u.bought}/${u.max})</span></div>
+        <div class="upgrade-desc">${u.desc}</div>
+        ${!maxed ? `<div class="upgrade-cost">✨ ${cost.toLocaleString()} beams</div>` : ""}
+      </div>
+      <button class="buy-btn ${maxed ? "maxed" : ""}" ${maxed ? "disabled" : (G.beams < cost ? "disabled" : "")} onclick="buyUpgrade(${u.id})">${maxed ? "MAXED" : "Buy"}</button>`;
+    list.appendChild(el);
+  });
+}
+
+function buyUpgrade(id) {
+  let u = UPGRADES[id];
+  let cost = Math.round(u.cost * Math.pow(1.9, u.bought));
+  if(G.beams < cost || u.bought >= u.max) return;
+  G.beams -= cost;
+  u.bought++;
+  if(u.type === "tap") G.tapPower += u.val;
+  if(u.type === "bps") G.bps += u.val;
+  if(u.type === "cost") G.costMult = Math.max(0.2, G.costMult - u.val);
+  if(u.type === "lucky") G.luckyMult += u.val;
+  if(u.type === "legend") G.legendMult += u.val;
+  if(u.type === "freecost") G.autoFree = true;
+  showToast(`${u.name} purchased!`);
+  updateAll();
+}
+
+function renderProgress() {
+  let rows = document.getElementById("prog-rows");
+  rows.innerHTML = "";
+  const groups = ["common","uncommon","rare","epic","legendary","mythic"];
+  groups.forEach(r => {
+    let total = DOGS.filter(d => d.rarity === r).length;
+    let owned = DOGS.filter(d => d.rarity === r && G.collection[d.id]).length;
+    let pct = total > 0 ? (owned / total * 100) : 0;
+    let el = document.createElement("div");
+    el.className = "prog-row";
+    el.innerHTML = `<span style="color:var(--${r === "common" ? "common" : r === "uncommon" ? "uncommon" : r === "rare" ? "rare" : r === "epic" ? "epic" : r === "legendary" ? "legendary" : "mythic"});min-width:64px;font-family:'Cinzel',serif;font-size:10px">${r}</span><div class="prog-bar-wrap"><div class="prog-fill" style="width:${pct}%"></div></div><span class="prog-count">${owned}/${total}</span>`;
+    rows.appendChild(el);
+  });
+}
+
+function renderOdds() {
+  let panel = document.getElementById("odds-rows");
+  panel.innerHTML = "";
+  let tw = DOGS.reduce((a,d) => a+d.weight, 0);
+  let grouped = {};
+  DOGS.forEach(d => grouped[d.rarity] = (grouped[d.rarity]||0) + d.weight);
+  let maxPct = 0;
+  Object.values(grouped).forEach(w => { let p = w/tw*100; if(p > maxPct) maxPct = p; });
+  ["common","uncommon","rare","epic","legendary","mythic"].forEach(r => {
+    let w = grouped[r] || 0;
+    let pct = (w/tw*100);
+    let barW = Math.max(2, pct/maxPct*100);
+    let col = r === "common" ? "var(--common)" : r === "uncommon" ? "var(--uncommon)" : r === "rare" ? "var(--rare)" : r === "epic" ? "var(--epic)" : r === "legendary" ? "var(--legendary)" : "var(--mythic)";
+    let el = document.createElement("div");
+    el.className = "odds-row";
+    el.innerHTML = `<div class="odds-dot" style="background:${col}"></div><span class="odds-label">${r}</span><div class="odds-bar-wrap"><div class="odds-bar" style="width:${barW}%;background:${col}"></div></div><span class="odds-pct">${pct.toFixed(2)}%</span>`;
+    panel.appendChild(el);
+  });
+}
+
+function updateAll() {
+  document.getElementById("s-beams").textContent = Math.floor(G.beams).toLocaleString();
+  document.getElementById("s-bps").textContent = G.bps;
+  let unique = Object.keys(G.collection).length;
+  document.getElementById("s-unique").textContent = unique;
+  document.getElementById("s-total").textContent = DOGS.length;
+  document.getElementById("s-total-coll").textContent = Object.values(G.collection).reduce((a,b)=>a+b,0);
+  document.getElementById("s-summons").textContent = G.summons.toLocaleString();
+  document.getElementById("tap-power-val").textContent = "+" + G.tapPower;
+  document.getElementById("total-taps").textContent = G.taps.toLocaleString();
+  let maxBeams = 2000 + G.summons * 5;
+  let pct = Math.min(100, G.beams / maxBeams * 100);
+  document.getElementById("beam-fill").style.width = Math.max(0.5, pct) + "%";
+  document.getElementById("beam-pct-label").textContent = Math.round(pct) + "%";
+  let c1 = summonCost(1), c10 = summonCost(10), c100 = summonCost(100);
+  document.getElementById("c1-cost").textContent = "costs " + c1.toLocaleString() + " beams";
+  document.getElementById("c10-cost").textContent = "costs " + c10.toLocaleString() + " beams";
+  document.getElementById("c100-cost").textContent = "costs " + c100.toLocaleString() + " beams";
+  document.getElementById("btn1").disabled = G.beams < c1;
+  document.getElementById("btn10").disabled = G.beams < c10;
+  document.getElementById("btn100").disabled = G.beams < c100;
+  renderCollection();
+  renderUpgrades();
+  renderProgress();
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  let t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+// passive income tick
+setInterval(() => {
+  if(G.bps > 0) {
+    G.beams += G.bps;
+    updateAll();
+  }
+  if(G.autoBeam) {
+    let cost = G.autoFree ? 0 : summonCost(1);
+    if(G.beams >= cost + (G.autoFree ? 0 : 5)) {
+      doSummon(1);
+    }
+  }
+}, 1000);
+
+renderOdds();
+updateAll();
+</script>
+</body>
+</html>
